@@ -15,13 +15,19 @@ function getColorForPercentage(percentage: number): string {
 
 export default async function Home() {
 
+  const { data : mutations} = await getPrimitiveModel('mutations')
   const { data : funds} = await getPrimitiveModel('funds')
   const { data : _categories} = await getPrimitiveModel('categories')
   const categories = _categories.sort((a: any, b: any) => a.name.localeCompare(b.name))
   const source = funds.filter((fund: any) => fund.is_wallet === true).sort((a: any, b: any) => a.name.localeCompare(b.name))
   const allocation = funds.filter((fund: any) => fund.is_expense === true).sort((a: any, b: any) => a.name.localeCompare(b.name))
-
   const {data: summaries} = await getExpenseSummary()
+
+  const salary = mutations.filter((mutation: any) => mutation.category === 'SALARY').sort((a: any, b: any) => b.trx_date.localeCompare(a.trx_date))[0]
+  const totalExpense = summaries.reduce((total: any, summary: any) => total + summary.expense_amount, 0)
+  const savings = (100*parseFloat(totalExpense)/salary.amount)
+  const savingColor = getColorForPercentage(100-savings)
+  console.log(totalExpense)
 
   return (
     <div className="flex flex-col h-screen">
@@ -32,7 +38,23 @@ export default async function Home() {
       </header>
 
       <main className="flex-grow overflow-auto">
-        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4 px-4">
+        <div className="grid gap-4 container mx-auto px-4 py-8">
+          <Card key={'savings'} style={{ backgroundColor: savingColor }}>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">{"SAVING"}</CardTitle>
+              <Wallet className="h-4 w-4 text-muted-foreground" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">
+                {
+                  (salary.amount-totalExpense).toLocaleString('en-US', {
+                    style: 'currency',
+                    currency: 'IDR',
+                  })
+                } ({savings.toFixed(2)}%)
+              </div>
+            </CardContent>
+          </Card>
           {source.map((wallet) => (
             <Card key={wallet.id}>
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
