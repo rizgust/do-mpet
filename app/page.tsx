@@ -6,16 +6,20 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 
 function getColorForPercentage(percentage: number): string {
   // Convert percentage to a hue value (120 for green, 0 for red)
-  const hue = ((1 - (percentage/100)) * 120).toString(10)
-  return `hsl(${hue}, 100%, 40%)`
+  if (percentage > 100) {
+    return `hsl(${0}, 100%, 50%)`
+  }
+  const hue = ((1 - ((percentage)/100)) * 120).toString(10)
+  return `hsl(${hue}, 100%, 30%)`
 }
 
 export default async function Home() {
 
   const { data : funds} = await getPrimitiveModel('funds')
-  const { data : categories} = await getPrimitiveModel('categories')
-  const source = funds.filter((fund: any) => fund.is_wallet === true)
-  const allocation = funds.filter((fund: any) => fund.is_expense === true)
+  const { data : _categories} = await getPrimitiveModel('categories')
+  const categories = _categories.sort((a: any, b: any) => a.name.localeCompare(b.name))
+  const source = funds.filter((fund: any) => fund.is_wallet === true).sort((a: any, b: any) => a.name.localeCompare(b.name))
+  const allocation = funds.filter((fund: any) => fund.is_expense === true).sort((a: any, b: any) => a.name.localeCompare(b.name))
 
   const {data: summaries} = await getExpenseSummary()
 
@@ -63,7 +67,7 @@ export default async function Home() {
                 <div
                   className="h-full bg-gray transition-all duration-300 ease-in-out text-right"
                   style={{ 
-                    width: `${item.expense_percentage}%`,
+                    width: `${item.expense_percentage>100 ? 100 : item.expense_percentage}%`,
                     backgroundColor: barColor
                   }}
                 />
